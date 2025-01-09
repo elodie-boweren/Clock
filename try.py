@@ -1,101 +1,105 @@
 from datetime import datetime, timedelta
 import time
-import keyboard 
-
-def main():
-    # Ask user for clock format
-    hour_format = input("\nPlease select the time format you want: \n12h: '12' \n24h: '24' ")
-
-    # format check
-    if hour_format not in ["12", "24"]:
-        print("Invalid format. the 24 hour format will be used by default.")
-        hour_format = "24"
-
-    # Define the clock format based on the option selected
-    if hour_format == "12":
-        time_format = "%I:%M:%S %p"  # 12h format with AM/PM
-    else:
-        time_format = "%H:%M:%S"  # 24h format
-
-    # Choice selection 
-    set_time = input("What would you like to do ? \nDisplay the clock (H) \nSet/change the time (R) \nSet an alarm (A) ")
-
-    paused = False  # Indicator to know if clock is on pause
 
 
-    def toggle_pause():
-        global paused
-        paused = not paused
+def menu():
+    return input("What would you like to do? \
+                    \nDisplay time (1) \
+                    \nSet time (2) \
+                    \nSet alarm (3) \
+                    \nChange hour format (4) \
+                    \nMake your selection: ")
+    
 
 
-    # Display clock on current time
+def choice(hour_format):
     try:
-        if set_time == "H":
-            print("Long press 'p' to pause or resume.")
-            while True:
-                if not paused:  # If the clock is not on pause, display the time
-                    now = datetime.now()
-                    current_time = now.strftime(time_format)
-                    print(f'\r{current_time}', end="")
-                time.sleep(1)
+        hour_choice = input("Choose format : 12 or 24 ")
+        if hour_choice == "24":
+            hour_format = "%H:%M:%S"
+            return hour_format
 
-                # Check if 'p' is pressed
-                if keyboard.is_pressed('p'):  # Long press 'p' to change state
-                    toggle_pause()
+        elif hour_choice == "12":
+            hour_format = "%I:%M:%S %p"
+            return hour_format
+        
     except KeyboardInterrupt:
-        main()
+        print("\n Return to menu")
+        main(hour_format,new_time,alarm_timer)
+        
 
-        # Simulation of preset time
+def time_setting (hour_format, new_time):
+    try:       
+        new_time_input = input("Set the time in format: 'HH:MM:SS': or 'HH:MM:SS AM/PM' or L for local time ")
+        
+        try:
+            if new_time_input == "L":
+                new_time = datetime.now()
+                return new_time
+            else:
+            # Convert user input into datetime object
+                new_time = datetime.strptime(new_time_input, hour_format)
+                return new_time
+        
+        except ValueError:
+            print("Wrong format! Make sure to use: 'HH:MM:SS'! ")
+            time_setting(hour_format, new_time)
+
+    except KeyboardInterrupt:
+        print("\n Return to menu")
+        main(hour_format,new_time,alarm_timer)
+
+
+
+def print_hour(hour_format, new_time,alarm_timer):
+    try :
+        #loop to print time
+        while True :
+            current_time = new_time.strftime(hour_format)  
+            print(f'\r{current_time}', end="\r")
+            time.sleep(1)
+            new_time += timedelta(seconds=1)
+            if current_time == alarm_timer:
+                print("\n The alarm rang !")
+                    
+    except KeyboardInterrupt: #Ctrl+C to go back to the main loop
+        print("\n Return to menu")
+        main(hour_format,new_time,alarm_timer)
+
+def alarm_setting(alarm_timer):
+                
     try:
-        if set_time == "R":
-            new_time_input = input("Enter the time following the format HH:MM:SS : ")
-            try:
-                new_time = datetime.strptime(new_time_input, "%H:%M:%S")
-            except ValueError:
-                print("Invalid format. Be sure to use HH:MM:SS.")
-                exit()
+        alarm_timer = input("Set the alarm in format: 'HH:MM:SS' or 'HH:MM:SS AM/PM' ")
+        return alarm_timer
+        
+    except KeyboardInterrupt: 
+        main(hour_format,new_time,alarm_timer)
 
-            print("Long press 'p' to pause or resume.")
-            while True:
-                if not paused:  # If clock is not paused, update the time
-                    current_time = new_time.strftime(time_format)
-                    print(f'\r{current_time}', end="")
-                    new_time += timedelta(seconds=1)
-                time.sleep(1)
 
-                # Check if 'p' is pressed
-                if keyboard.is_pressed('p'):
-                    toggle_pause()
-    except KeyboardInterrupt:
-        main()
+def main(hour_format,new_time,alarm_timer):
+   
+    while True:
 
-        # Set an alarm
-    try:
-        if set_time == "A":
-            alarm = input("Enter the time you would like tha alarm to ring following the format HH:MM:SS : ")
-            try:
-                alarm_time = datetime.strptime(alarm, "%H:%M:%S").time()
-            except ValueError:
-                print("Invalid format. Be sure to use HH:MM:SS.")
-                exit()
+        #Choice
+        set_time = menu()
+        
+        # loop for hour format 
+        if set_time == "4":
+            hour_format = choice(hour_format) 
 
-            print("Long press 'p' to pause or resume.")
-            while True:
-                if not paused:  # If the clock is not on pause
-                    now = datetime.now()
-                    current_time = now.strftime(time_format)
-                    print(f'\r{current_time}', end="")
-                    if now.time() == alarm_time:
-                        print("\nThe alarm has rung !")
-                        break
-                time.sleep(1)
+        elif set_time == "2":
+            new_time = time_setting(hour_format, new_time)
 
-                # Check if 'p' is pressed
-                if keyboard.is_pressed('p'):
-                    toggle_pause()
+        elif set_time == "1":
+            print_hour(hour_format,new_time,alarm_timer)
 
-        else:
-            print("Invalid choice.")
-    except KeyboardInterrupt:
-        main()
-print(main())
+        elif set_time == "3":
+            alarm_timer = alarm_setting(alarm_timer)
+    
+
+
+if __name__ == "__main__": 
+    hour_format = "%H:%M:%S"  # Default hour format
+    new_time = datetime.strptime("00:00:00", "%H:%M:%S")  # Default timemain()
+    alarm_timer = "99:99:99"
+    main(hour_format,new_time,alarm_timer)
