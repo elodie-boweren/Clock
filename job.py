@@ -1,13 +1,15 @@
 from datetime import datetime, timedelta
 import time
-import keyboard
 import threading
-import playsound
+import pygame
+from pynput import keyboard
 
 paused = False  # Indicateur pour savoir si l'horloge est en pause
+stop_program = False  # Indicateur pour arrêter le programme
+
 
 def choice():
-    """Choisissez le format d'heure."""
+    #Choisissez le format d'heure
     try:
         hour_format = input("\nChoisissez le format d'heure: \n12h: '12' \n24h: '24'\n ")
         if hour_format == "12":
@@ -23,38 +25,68 @@ def choice():
 
 
 def toggle_pause():
-    """Mettre en pause ou reprendre l'horloge."""
+    #Mettre en pause ou reprendre l'horloge
     global paused
     paused = not paused
     print("\nPause" if paused else "\nReprise")
 
 
 def increment_time(new_time_ref):
-    """Incrémente le temps d'une seconde en continu."""
+    #Incrémente le temps d'une seconde en continu
     global paused
-    while True:
+    while not stop_program:
         if not paused:
             new_time_ref[0] += timedelta(seconds=1)
             time.sleep(1)
 
 
 def display_time(hour_format, current_time, alarm_timer):
-    """Affiche l'heure actuelle et vérifie l'alarme."""
+    #Affiche l'heure actuelle et vérifie l'alarme
     formatted_time = current_time.strftime(hour_format)
     print(f'\r{formatted_time}', end="")
 
     if alarm_timer and formatted_time == alarm_timer:
-        playsound.playsound("3046.mp3")
-        print("\nL'alarme a sonné!")
+        print("\nL'alarme a sonné !")
+        play_sound("3046.mp3")
         return None  # Réinitialiser l'alarme après son déclenchement
 
     return alarm_timer
 
 
-def manage_clock(hour_format, new_time_ref, alarm_timer):
-    """Gère l'affichage de l'heure en continu."""
+def play_sound(file_path):
+    #Joue un son avec pygame
     try:
-        while True:
+        pygame.mixer.init()
+        pygame.mixer.music.load(file_path)
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            time.sleep(0.1)
+    except Exception as e:
+        print(f"Erreur lors de la lecture du fichier audio : {e}")
+
+
+def manage_clock(hour_format, new_time_ref, alarm_timer):
+    #Gère l'affichage de l'heure en continu
+    global stop_program
+
+    def on_press(key):
+        #Gestion des touches clavier avec pynput
+        global stop_program, paused
+        try:
+            if key.char == 'p':
+                toggle_pause()
+            elif key.char == 'q':
+                stop_program = True
+                return False  # Stop the listener
+        except AttributeError:
+            pass
+
+    # Configurer le listener pour les entrées clavier
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
+
+    try:
+        while not stop_program:
             # Synchroniser l'accès à new_time
             current_time = new_time_ref[0]
 
@@ -62,23 +94,14 @@ def manage_clock(hour_format, new_time_ref, alarm_timer):
             alarm_timer = display_time(hour_format, current_time, alarm_timer)
 
             time.sleep(0.5)
-
-            # Gérer la pause avec la touche 'p'
-            if keyboard.is_pressed('p'):
-                toggle_pause()
-                time.sleep(0.5)  # Éviter les multiples détections
-
-            # Permettre de revenir au menu avec la touche 'q'
-            if keyboard.is_pressed('q'):
-                print("\nRetour au menu.")
-                break
-
     except KeyboardInterrupt:
         print("\nRetour au menu.")
+    finally:
+        listener.stop()
 
 
 def time_setting(hour_format):
-    """Règle une nouvelle heure."""
+    #Règle une nouvelle heure
     try:
         new_time_input = input("Saisissez l'heure au format HH:MM:SS ou L pour l'heure locale : ")
         if new_time_input.upper() == "L":
@@ -91,7 +114,7 @@ def time_setting(hour_format):
 
 
 def alarm_setting():
-    """Règle une alarme."""
+    #Règle une alarme
     try:
         alarm_input = input("Réglez l'alarme au format HH:MM:SS : ")
         return alarm_input
@@ -101,13 +124,15 @@ def alarm_setting():
 
 
 def menu():
-    """Affiche le menu principal."""
+    #Affiche le menu principal
     return input("\nQue souhaitez-vous faire ? \n1. Afficher l'heure \n2. Régler l'heure \n3. Mettre une alarme \n4. Changer le format d'heure\nVotre choix : ").strip()
 
 
 def main(hour_format, new_time_ref, alarm_timer):
-    """Boucle principale du programme."""
-    while True:
+    #Boucle principale du programme
+    global stop_program
+
+    while not stop_program:
         try:
             set_time = menu()
 
@@ -132,6 +157,7 @@ def main(hour_format, new_time_ref, alarm_timer):
 
         except KeyboardInterrupt:
             print("\nUtilisez le menu pour quitter.")
+            stop_program = True
 
 
 if __name__ == "__main__":
@@ -144,3 +170,4 @@ if __name__ == "__main__":
 
     # Lancer le programme principal
     main(hour_format, new_time, alarm_timer)
+
