@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import time
 import keyboard
 import threading
+import playsound
 
 paused = False  # Indicateur pour savoir si l'horloge est en pause
 
@@ -43,6 +44,7 @@ def display_time(hour_format, current_time, alarm_timer):
     print(f'\r{formatted_time}', end="")
 
     if alarm_timer and formatted_time == alarm_timer:
+        playsound.playsound("3046.mp3")
         print("\nL'alarme a sonné!")
         return None  # Réinitialiser l'alarme après son déclenchement
 
