@@ -101,14 +101,18 @@ def manage_clock(hour_format, new_time_ref, alarm_timer):
 def time_setting(hour_format):
     #Set a new time
     try:
-        new_time_input = input("Enter the time in format HH:MM:SS or L for local time : ")
-        if new_time_input.upper() == "L":
-            return datetime.now()
-        else:
-            return datetime.strptime(new_time_input, "%H:%M:%S")
-    except ValueError:
-        print("Invalid format. Please be sure to use HH:MM:SS.")
-        return time_setting(hour_format)
+        try:
+            new_time_input = input("Enter the time in format HH:MM:SS or L for local time : ")
+            if new_time_input.upper() == "L":
+                return datetime.now()
+            else:
+                return datetime.strptime(new_time_input, "%H:%M:%S")
+        except ValueError:
+            print("Invalid format. Please be sure to use HH:MM:SS.")
+            return time_setting(hour_format)
+    except KeyboardInterrupt:
+        print("\nReturn to menu.")
+        return main(hour_format, new_time, alarm_timer)
 
 
 def alarm_setting():
