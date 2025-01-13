@@ -118,7 +118,7 @@ def time_setting(hour_format):
 def alarm_setting():
     #Set an alarm
     try:
-        alarm_input = input("Set the alarm with format HH:MM:SS : ")
+        alarm_input = input("Set the alarm with format HH:MM:SS or HH:MM:SS AM/PM : ")
         return alarm_input
     except KeyboardInterrupt:
         print("\nReturn to menu.")
